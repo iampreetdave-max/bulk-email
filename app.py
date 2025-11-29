@@ -126,7 +126,8 @@ def send_emails(sender_email, sender_password, smtp_server, smtp_port, subject, 
                         part.set_payload(attachment.read())
                     
                     encoders.encode_base64(part)
-                    part.add_header('Content-Disposition', f'attachment; filename= {os.path.basename(pdf_path)}')
+                    filename = os.path.basename(pdf_path)
+                    part.add_header('Content-Disposition', 'attachment', filename=filename)
                     msg.attach(part)
                 
                 server.send_message(msg)
