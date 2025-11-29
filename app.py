@@ -98,7 +98,7 @@ def parse_emails(file_content):
     emails = [email for email in emails if email and '@' in email]
     return emails
 
-def send_emails(sender_email, sender_password, smtp_server, smtp_port, subject, body, email_list, pdf_path=None):
+def send_emails(sender_email, sender_password, smtp_server, smtp_port, subject, body, email_list, pdf_path=None, pdf_filename=None):
     """Send emails to multiple recipients"""
     
     progress_bar = st.progress(0)
@@ -126,8 +126,7 @@ def send_emails(sender_email, sender_password, smtp_server, smtp_port, subject, 
                         part.set_payload(attachment.read())
                     
                     encoders.encode_base64(part)
-                    filename = os.path.basename(pdf_path)
-                    part.add_header('Content-Disposition', 'attachment', filename=filename)
+                    part.add_header('Content-Disposition', 'attachment', filename=pdf_filename)
                     msg.attach(part)
                 
                 server.send_message(msg)
@@ -174,7 +173,9 @@ if st.button("🚀 Send Campaign", type="primary", use_container_width=True):
             
             # Handle PDF
             pdf_path = None
+            pdf_filename = None
             if pdf_file:
+                pdf_filename = pdf_file.name
                 with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
                     tmp.write(pdf_file.read())
                     pdf_path = tmp.name
@@ -189,7 +190,8 @@ if st.button("🚀 Send Campaign", type="primary", use_container_width=True):
                 subject,
                 email_body,
                 emails,
-                pdf_path
+                pdf_path,
+                pdf_filename
             )
             
             if results:
