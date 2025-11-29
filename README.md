@@ -1,4 +1,5 @@
 # Cold Email Campaign Tool
+[Try the Product](https://bulk-email.streamlit.app/)
 
 A professional, user-friendly web application for managing and executing cold email campaigns at scale. Built with Streamlit, this tool streamlines the process of sending personalized bulk emails with optional PDF attachments.
 
