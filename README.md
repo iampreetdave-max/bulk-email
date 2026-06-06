@@ -1,188 +1,96 @@
 # Cold Email Campaign Tool
-[Try the Product](https://bulk-email.streamlit.app/)
 
-A professional, user-friendly web application for managing and executing cold email campaigns at scale. Built with Streamlit, this tool streamlines the process of sending personalized bulk emails with optional PDF attachments.
+![Python](https://img.shields.io/badge/Python-3776AB?style=flat&logo=python&logoColor=white)
+![Streamlit](https://img.shields.io/badge/Streamlit-FF4B4B?style=flat&logo=streamlit&logoColor=white)
 
-## 🎯 Features
+A production Streamlit application for running cold email campaigns at scale: upload a recipient list, compose once, attach a PDF, and send through your own SMTP account with live delivery tracking.
 
-- **Multi-Provider Support** - Compatible with Gmail, Outlook, Yahoo, and custom SMTP servers
-- **Batch Email Sending** - Send to hundreds of recipients from a simple CSV/TXT file
-- **PDF Attachments** - Include professional documents with every email
-- **Live Progress Tracking** - Real-time status updates and success/failure metrics
-- **Email Preview** - See exactly what recipients will receive before sending
-- **Rate Limiting** - Configurable delays between sends to avoid spam filters
-- **Error Reporting** - Detailed feedback on failed sends with specific error messages
-- **Intuitive UI** - No technical knowledge required—guided setup with built-in instructions
+**Live deployment:** [bulk-email.streamlit.app](https://bulk-email.streamlit.app/)
 
-## 📋 Requirements
+## Overview
+
+The tool removes the manual work from bulk outreach. Campaigns run directly against the sender's own email provider over SMTP (STARTTLS), so there is no third-party sending service, no stored credentials, and no data leaving the session. Recipient lists are parsed from plain CSV/TXT files, sends are rate-limited with a configurable delay to stay under provider spam thresholds, and every send is reported individually with success/failure metrics and per-recipient error detail.
+
+The application is a single-file Streamlit app deployed on Streamlit Community Cloud; a scheduled keep-alive script prevents the hosted instance from sleeping.
+
+## Key Features
+
+- Multi-provider SMTP support: Gmail, Outlook, Yahoo, or any custom SMTP server and port
+- Recipient lists from `.txt` or `.csv`, accepting both comma-separated and line-separated formats with basic address validation
+- Optional PDF attachment, handled through a temporary file and deleted after the campaign completes
+- Configurable inter-send delay (0-10 seconds) to avoid tripping provider rate limits
+- Live progress bar with per-recipient send status during the campaign
+- Post-campaign metrics: successful, failed, and total counts plus a per-recipient error report
+- Email preview before sending
+- In-app setup instructions for generating app passwords (Gmail, Outlook, Yahoo)
+- Credentials are used in-session only; passwords are never stored or logged
+
+## How It Works
+
+```
+recipient file (.txt/.csv) --> parse + validate
+email body + subject + PDF --> MIME message per recipient
+SMTP (STARTTLS, port 587)  --> provider --> recipients
+                                |
+                          live progress + results
+```
+
+A single SMTP connection is opened per campaign and reused for every recipient. Each message is assembled as a MIME multipart (plain-text body plus optional base64-encoded PDF part), sent, and recorded. Failures are caught per recipient so one bad address never aborts the rest of the run.
+
+## Tech Stack
+
+- Streamlit (UI, progress reporting, file uploads)
+- Python standard library: `smtplib`, `email.mime`, `tempfile`
+- Streamlit Community Cloud (hosting)
+
+## Getting Started
+
+### Prerequisites
 
 - Python 3.7+
-- Streamlit
-- Standard library modules (smtplib, email, tempfile)
+- An email account with SMTP access (Gmail and Yahoo require an app password)
 
-## 🚀 Quick Start
+### Run Locally
 
-### Local Installation
-
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/yourusername/cold-email-campaign.git
-   cd cold-email-campaign
-   ```
-
-2. **Install dependencies:**
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-3. **Run the application:**
-   ```bash
-   streamlit run app.py
-   ```
-
-4. **Access the app:**
-   Open your browser and navigate to `http://localhost:8501`
-
-### Cloud Deployment (Streamlit Cloud)
-
-1. Push your repository to GitHub
-2. Go to [share.streamlit.io](https://share.streamlit.io)
-3. Click "New app" and connect your GitHub repository
-4. Select the branch and `app.py` as the main file
-5. Deploy—your app will be live with a public URL!
-
-## 📧 Email Configuration
-
-### Gmail Setup (Recommended)
-
-1. Navigate to [myaccount.google.com](https://myaccount.google.com)
-2. Select **Security** from the left menu
-3. Enable **2-Step Verification** (if not already enabled)
-4. Search for **App passwords** in the settings
-5. Select "Mail" and "Windows Computer"
-6. Google will generate a 16-character password
-7. Copy and paste this password into the app
-
-**Note:** Gmail requires app-specific passwords for security reasons. Your regular Gmail password will not work.
-
-### Outlook Setup
-
-1. Sign in to your Microsoft account
-2. Go to [account.microsoft.com/security](https://account.microsoft.com/security)
-3. Under "App passwords," create a new password for "Other (Windows, Mac, etc.)"
-4. Use this password in the application
-
-### Yahoo Setup
-
-1. Go to [account.yahoo.com](https://account.yahoo.com)
-2. Click **Account security**
-3. Generate an **App password** for Yahoo Mail
-4. Use the generated password in the application
-
-### Custom SMTP
-
-Select "Other" and enter your SMTP server details:
-- **Server:** Your SMTP server address (e.g., `mail.customdomain.com`)
-- **Port:** Typically 587 (TLS) or 465 (SSL)
-
-## 📁 Email List Format
-
-Your email file can be in either format:
-
-**Comma-separated (single line):**
-```
-john@company.com, sarah@company.com, mike@company.com
+```bash
+git clone https://github.com/iampreetdave-max/bulk-email.git
+cd bulk-email
+pip install streamlit
+streamlit run app.py
 ```
 
-**Line-separated (multiple lines):**
+Open `http://localhost:8501`, configure your provider and credentials, upload a recipient list, and send.
+
+### Deploy
+
+Push to GitHub and create a new app on [share.streamlit.io](https://share.streamlit.io) pointing at `app.py`. No environment variables are required; credentials are entered at runtime in the UI.
+
+## Provider Notes
+
+| Provider | Requirement |
+|----------|-------------|
+| Gmail | 2-Step Verification + app password (regular password will not work) |
+| Outlook | App password from account security settings |
+| Yahoo | App password from account security settings |
+| Other | SMTP server hostname and port (587 TLS typical) |
+
+## Operational Guidance
+
+- Test with a small batch (5-10 recipients) before a full run
+- Keep a 1-2 second delay between sends; new accounts have lower sending limits
+- Comply with CAN-SPAM, GDPR, and your provider's bulk-sending policies
+
+## Project Structure
+
 ```
-john@company.com
-sarah@company.com
-mike@company.com
+bulk-email/
+├── app.py               # Streamlit application: SMTP config, parsing, sending, reporting
+├── login_script.py      # Keep-alive helper for the hosted deployment
+├── .github/workflows/   # Scheduled automation
+├── LICENSE
+└── README.md
 ```
 
-The application automatically detects and parses both formats.
+## License
 
-## 🎨 Usage Workflow
-
-1. **Configure Email Account:**
-   - Select your email provider
-   - Enter your email address and app password
-
-2. **Set Campaign Details:**
-   - Enter subject line
-   - Set delay between emails (0-10 seconds recommended)
-
-3. **Write Email Content:**
-   - Compose your email message in the text area
-   - Preview how it will appear to recipients
-
-4. **Upload Files:**
-   - Upload your email list (CSV or TXT)
-   - Optionally upload a PDF attachment
-
-5. **Review & Send:**
-   - Verify all details are correct
-   - Click "Send Campaign"
-   - Monitor real-time progress and results
-
-## 📊 Results & Reporting
-
-After sending, the application displays:
-- **Successful sends** - Number of emails delivered
-- **Failed sends** - Number of delivery failures
-- **Total sent** - Overall campaign statistics
-- **Error details** - Specific issues for troubleshooting
-
-## ⚠️ Best Practices
-
-- **Start small:** Test with a small batch (5-10 emails) first
-- **Use delays:** Set 1-2 second delays to avoid triggering spam filters
-- **Professional content:** Personalize messages when possible for better engagement
-- **Warm-up accounts:** New accounts may have sending limits—gradually increase volume
-- **Follow laws:** Comply with CAN-SPAM, GDPR, and other email regulations
-- **Monitor deliverability:** Check recipient responses and adjust messaging accordingly
-
-## 🔒 Security & Privacy
-
-- Passwords are **never stored** or logged
-- All data is processed in-memory during the session
-- PDF files are temporarily stored and automatically deleted after sending
-- No data is sent to external servers beyond your email provider
-- Use environment variables for sensitive credentials when deploying
-
-## 🐛 Troubleshooting
-
-### "Login failed" Error
-- Verify you're using the correct **app password** (not your regular password)
-- For Gmail, ensure 2-Step Verification is enabled
-- Check that your email provider supports SMTP access
-
-### "Invalid email" Warnings
-- Ensure your email list contains valid email addresses with "@" symbol
-- Remove extra spaces or special characters from the email list
-
-### Emails Not Sending
-- Check your internet connection
-- Verify firewall/antivirus isn't blocking SMTP ports (587 or 465)
-- Ensure you're not exceeding your email provider's sending limits
-
-### PDF Not Attaching
-- Confirm the PDF file is not corrupted and under 25MB
-- Verify file permissions allow reading
-
-## 📝 License
-
-This project is licensed under the MIT License—feel free to use, modify, and distribute.
-
-## 🤝 Contributing
-
-Contributions are welcome! Please feel free to submit pull requests or open issues for bug reports and feature suggestions.
-
-## 📧 Support
-
-For issues, questions, or suggestions, please open an issue on GitHub or contact the maintainer.
-
----
-
-**Built By Preet Dave**
+See [LICENSE](LICENSE).
